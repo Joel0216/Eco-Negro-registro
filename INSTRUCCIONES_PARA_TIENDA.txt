@@ -1,0 +1,413 @@
+╔══════════════════════════════════════════════════════════════════╗
+║                                                                  ║
+║   📝 INSTRUCCIONES PARA IMPLEMENTAR LA TIENDA                   ║
+║   Para: Compañero que trabajará en la tienda                    ║
+║                                                                  ║
+╚══════════════════════════════════════════════════════════════════╝
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📋 RESUMEN
+
+El sistema de registro y autenticación ya está completo y funcionando.
+Ahora necesitas implementar la tienda con pasarela de pago real.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🎯 LO QUE YA ESTÁ HECHO
+
+✅ Sistema de registro de usuarios
+✅ Inicio de sesión
+✅ Base de datos con Supabase
+✅ Tabla de jugadores (players)
+✅ Tabla de transacciones (transactions)
+✅ Confirmación automática de email
+✅ Pantalla de carga después del login
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🛒 LO QUE FALTA: IMPLEMENTAR LA TIENDA
+
+1. Integrar pasarela de pago real (Stripe/PayPal/Mercado Pago)
+2. Definir productos reales a vender
+3. Conectar la tienda al botón desde el juego
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📁 ARCHIVOS IMPORTANTES
+
+1. INTEGRACION_PAGO.md
+   → Guía completa de cómo integrar Stripe, PayPal o Mercado Pago
+   → Incluye código de ejemplo
+   → Paso a paso detallado
+
+2. PRODUCTOS_EJEMPLO.md
+   → Catálogo de ideas de productos
+   → Ejemplos de precios
+   → Estructura de datos
+
+3. lib/screens/shop_screen.dart
+   → Pantalla de la tienda (ya creada)
+   → Tiene 6 productos de ejemplo
+   → Simulador de pago funcionando
+
+4. lib/widgets/payment_dialog.dart
+   → Modal de pago (ya creado)
+   → Formulario completo
+   → Listo para integrar pasarela real
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🚀 PASOS PARA IMPLEMENTAR LA TIENDA
+
+PASO 1: ELEGIR PASARELA DE PAGO (30 min)
+
+Opciones recomendadas:
+
+A) STRIPE (Recomendado) ⭐
+   - Fácil de integrar
+   - Soporte global
+   - Tarifas: 2.9% + $0.30 por transacción
+   - Documentación: https://stripe.com/docs
+
+B) PAYPAL
+   - Muy conocido
+   - No requiere tarjeta
+   - Bueno para internacional
+   - Documentación: https://developer.paypal.com
+
+C) MERCADO PAGO (Para Latinoamérica)
+   - Ideal para LATAM
+   - Múltiples métodos de pago
+   - Documentación: https://www.mercadopago.com.mx/developers
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+PASO 2: CREAR CUENTA EN LA PASARELA (15 min)
+
+1. Ve al sitio web de la pasarela elegida
+2. Crea una cuenta
+3. Obtén las claves de prueba (test keys)
+4. Guarda las claves en un lugar seguro
+
+Ejemplo con Stripe:
+- Publishable key: pk_test_...
+- Secret key: sk_test_...
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+PASO 3: INSTALAR DEPENDENCIAS (5 min)
+
+Abre pubspec.yaml y añade:
+
+Para Stripe:
+  flutter_stripe: ^10.1.1
+
+Para PayPal:
+  flutter_paypal_payment: ^1.0.6
+
+Para Mercado Pago:
+  http: ^1.1.0
+
+Luego ejecuta:
+  flutter pub get
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+PASO 4: CONFIGURAR LA PASARELA (30 min)
+
+Lee el archivo: INTEGRACION_PAGO.md
+
+Contiene:
+- Código completo de ejemplo
+- Configuración paso a paso
+- Manejo de errores
+- Webhooks
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+PASO 5: MODIFICAR payment_dialog.dart (1 hora)
+
+Ubicación: lib/widgets/payment_dialog.dart
+
+Busca la función: _processPayment()
+
+Reemplaza el código simulado con la integración real.
+
+Ejemplo con Stripe:
+
+Future<void> _processPayment() async {
+  try {
+    // 1. Crear Payment Intent en tu backend
+    final response = await http.post(
+      Uri.parse('https://tu-backend.com/create-payment-intent'),
+      body: json.encode({
+        'amount': (widget.product['price'] * 100).toInt(),
+        'currency': 'usd',
+      }),
+    );
+    
+    final paymentIntent = json.decode(response.body);
+    
+    // 2. Confirmar pago con Stripe
+    await Stripe.instance.confirmPayment(
+      paymentIntentClientSecret: paymentIntent['clientSecret'],
+      data: PaymentMethodParams.card(
+        paymentMethodData: PaymentMethodData(
+          billingDetails: BillingDetails(
+            name: _nameController.text,
+          ),
+        ),
+      ),
+    );
+    
+    // 3. Actualizar monedas en Supabase
+    await _updatePlayerCoins();
+    
+    _showSuccess();
+  } catch (e) {
+    _showError('Error: $e');
+  }
+}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+PASO 6: CREAR BACKEND PARA PAGOS (2 horas)
+
+Necesitas un backend para procesar pagos de forma segura.
+
+Opciones:
+
+A) Node.js + Express (Recomendado)
+B) Python + Flask
+C) Firebase Cloud Functions
+
+Ejemplo básico con Node.js:
+
+const express = require('express');
+const stripe = require('stripe')('sk_test_tu_clave_secreta');
+const app = express();
+
+app.use(express.json());
+
+app.post('/create-payment-intent', async (req, res) => {
+  const { amount, currency } = req.body;
+  
+  const paymentIntent = await stripe.paymentIntents.create({
+    amount,
+    currency,
+  });
+  
+  res.json({ clientSecret: paymentIntent.client_secret });
+});
+
+app.listen(3000);
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+PASO 7: DEFINIR PRODUCTOS REALES (30 min)
+
+Edita: lib/screens/shop_screen.dart
+
+Busca: final List<Map<String, dynamic>> _products
+
+Reemplaza los productos de ejemplo con tus productos reales:
+
+final List<Map<String, dynamic>> _products = [
+  {
+    'id': 'coins_100',
+    'name': '100 Monedas',
+    'description': 'Pack básico',
+    'price': 0.99,
+    'coins': 100,
+    'icon': Icons.monetization_on,
+  },
+  {
+    'id': 'vip_month',
+    'name': 'VIP Mensual',
+    'description': 'Acceso VIP 30 días',
+    'price': 9.99,
+    'icon': Icons.star,
+  },
+  // Añade más productos...
+];
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+PASO 8: PROBAR CON TARJETAS DE PRUEBA (30 min)
+
+Stripe - Tarjetas de prueba:
+  Éxito: 4242 4242 4242 4242
+  Requiere autenticación: 4000 0025 0000 3155
+  Declinada: 4000 0000 0000 9995
+  CVV: Cualquier 3 dígitos
+  Fecha: Cualquier fecha futura
+
+PayPal:
+  Usa la cuenta sandbox que te proporciona PayPal
+
+Mercado Pago:
+  Usa las tarjetas de prueba de su documentación
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+PASO 9: CONECTAR DESDE EL JUEGO (15 min)
+
+Cuando el jugador quiera comprar algo desde el juego:
+
+Opción A: Abrir la tienda en un WebView
+Opción B: Abrir URL externa
+Opción C: Integrar la tienda en el juego
+
+Ejemplo para abrir la tienda:
+
+// Desde Unity (C#)
+Application.OpenURL("https://tu-app.com/shop");
+
+// Desde Flutter
+Navigator.pushNamed(context, '/shop');
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+PASO 10: CAMBIAR A PRODUCCIÓN (1 hora)
+
+Cuando todo funcione en pruebas:
+
+1. Obtén las claves de producción de tu pasarela
+2. Reemplaza las claves de prueba
+3. Configura webhooks en producción
+4. Prueba con una compra real pequeña
+5. Monitorea las transacciones
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+⏱️ TIEMPO ESTIMADO TOTAL: 6-8 HORAS
+
+- Elegir pasarela: 30 min
+- Crear cuenta: 15 min
+- Instalar dependencias: 5 min
+- Configurar pasarela: 30 min
+- Modificar código: 1 hora
+- Crear backend: 2 horas
+- Definir productos: 30 min
+- Probar: 30 min
+- Conectar desde juego: 15 min
+- Producción: 1 hora
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📚 DOCUMENTACIÓN DISPONIBLE
+
+1. INTEGRACION_PAGO.md
+   → Guía completa de integración
+   → Código de ejemplo
+   → Troubleshooting
+
+2. PRODUCTOS_EJEMPLO.md
+   → Ideas de productos
+   → Estrategias de precios
+   → Ejemplos de código
+
+3. DEPLOYMENT.md
+   → Cómo publicar la app
+   → Configuración de producción
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🔐 SEGURIDAD IMPORTANTE
+
+❌ NUNCA hagas esto:
+- Procesar pagos completamente en el cliente
+- Exponer claves secretas en el código
+- Confiar solo en validación del cliente
+
+✅ SIEMPRE haz esto:
+- Procesar pagos en un backend seguro
+- Validar transacciones en el servidor
+- Usar HTTPS
+- Implementar webhooks
+- Registrar todas las transacciones
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📞 RECURSOS ÚTILES
+
+Stripe:
+  Docs: https://stripe.com/docs
+  Dashboard: https://dashboard.stripe.com
+
+PayPal:
+  Docs: https://developer.paypal.com
+  Dashboard: https://developer.paypal.com/dashboard
+
+Mercado Pago:
+  Docs: https://www.mercadopago.com.mx/developers
+  Dashboard: https://www.mercadopago.com.mx/developers/panel
+
+Flutter Stripe:
+  Docs: https://pub.dev/packages/flutter_stripe
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✅ CHECKLIST DE IMPLEMENTACIÓN
+
+Preparación:
+- [ ] Elegir pasarela de pago
+- [ ] Crear cuenta en la pasarela
+- [ ] Obtener claves de prueba
+- [ ] Leer INTEGRACION_PAGO.md
+
+Desarrollo:
+- [ ] Instalar dependencias
+- [ ] Configurar pasarela en main.dart
+- [ ] Crear backend para pagos
+- [ ] Modificar payment_dialog.dart
+- [ ] Definir productos reales
+- [ ] Probar con tarjetas de prueba
+
+Testing:
+- [ ] Probar compra exitosa
+- [ ] Probar compra fallida
+- [ ] Verificar actualización de monedas
+- [ ] Verificar registro en transactions
+- [ ] Probar desde diferentes dispositivos
+
+Producción:
+- [ ] Obtener claves de producción
+- [ ] Configurar webhooks
+- [ ] Hacer compra de prueba real
+- [ ] Monitorear transacciones
+- [ ] Configurar alertas de errores
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+💡 RECOMENDACIÓN
+
+Empieza con Stripe. Es la más fácil de integrar y tiene la mejor
+documentación. Una vez que funcione, puedes añadir otras pasarelas
+si es necesario.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🎯 RESULTADO FINAL
+
+Cuando termines, los jugadores podrán:
+
+1. Registrarse en el juego
+2. Iniciar sesión
+3. Abrir la tienda desde el juego
+4. Ver productos disponibles
+5. Comprar con tarjeta de crédito/débito
+6. Las monedas se actualizan automáticamente
+7. Pueden usar las monedas en el juego
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+¡Éxito con la implementación! 🚀
+
+Si tienes dudas, revisa los archivos de documentación.
+Todo está explicado paso a paso.
+
+╔══════════════════════════════════════════════════════════════════╗
+║  Empieza leyendo: INTEGRACION_PAGO.md                           ║
+╚══════════════════════════════════════════════════════════════════╝
